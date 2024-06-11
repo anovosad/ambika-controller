@@ -58,7 +58,10 @@
           "width": 0.0
         }
       ],
-      "drc_exclusions": [],
+      "drc_exclusions": [
+        "unconnected_items|335102200|132080000|d3164710-30f1-4ce1-a42d-dfb38a308e36|4b681952-14b4-411b-b480-216c490cd954",
+        "unconnected_items|387172200|86006940|a0f55e51-9fc6-4ab0-b5f9-94ed5c204a2c|80525518-193f-4058-9833-3fd0ac035708"
+      ],
       "meta": {
         "version": 2
       },
@@ -115,7 +118,7 @@
       },
       "rules": {
         "max_error": 0.005,
-        "min_clearance": 0.0,
+        "min_clearance": 0.33,
         "min_connection": 0.0,
         "min_copper_edge_clearance": 0.5,
         "min_hole_clearance": 0.25,
@@ -127,7 +130,7 @@
         "min_text_height": 0.8,
         "min_text_thickness": 0.08,
         "min_through_hole_diameter": 0.3,
-        "min_track_width": 0.0,
+        "min_track_width": 0.2,
         "min_via_annular_width": 0.1,
         "min_via_diameter": 0.5,
         "solder_mask_to_copper_clearance": 0.0,
@@ -179,7 +182,9 @@
       "track_widths": [
         0.0,
         0.2,
-        0.3
+        0.254,
+        0.3,
+        0.6
       ],
       "tuning_pattern_settings": {
         "diff_pair_defaults": {
@@ -211,6 +216,10 @@
         {
           "diameter": 0.0,
           "drill": 0.0
+        },
+        {
+          "diameter": 0.6,
+          "drill": 0.5
         }
       ],
       "zones_allow_external_fillets": false
@@ -479,7 +488,7 @@
         "name": "power",
         "pcb_color": "rgba(0, 0, 0, 0.000)",
         "schematic_color": "rgba(0, 0, 0, 0.000)",
-        "track_width": 0.3,
+        "track_width": 0.6,
         "via_diameter": 0.6,
         "via_drill": 0.3,
         "wire_width": 8
@@ -494,6 +503,14 @@
       {
         "netclass": "power",
         "pattern": "GND"
+      },
+      {
+        "netclass": "Default",
+        "pattern": ""
+      },
+      {
+        "netclass": "power",
+        "pattern": "+3.3V"
       }
     ]
   },
@@ -502,7 +519,7 @@
       "gencad": "",
       "idf": "",
       "netlist": "",
-      "plot": "",
+      "plot": "plot/",
       "pos_files": "",
       "specctra_dsn": "",
       "step": "",
