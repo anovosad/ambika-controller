@@ -89,12 +89,12 @@ void UISwitch::press(uint16_t captured) {
     isPressed = true;
 
     switch (pin) {
-      case PIN_SW_EDIT_MATRIX:
-        activePage = PAGE_EDIT_MATRIX;
+      case PIN_SW_MAIN_PAGE:
+        activePage = PAGE_MAIN;
         break;
 
-      case PIN_SW_EDIT_OP:
-        activePage = PAGE_EDIT_OP;
+      case PIN_SW_EDIT_MATRIX_OP:
+        activePage = (activePage == PAGE_EDIT_MATRIX) ? PAGE_EDIT_OP : PAGE_EDIT_MATRIX;
         break;
 
       case PIN_SW_EDIT_VOICE:
@@ -105,11 +105,10 @@ void UISwitch::press(uint16_t captured) {
         break;
 
       case PIN_SW_SAVE_PATCH:
-        pageVoice.sendMultiDataToAmbika(MIDI);
         break;
 
       case PIN_SW_SAVE:
-        activePage = PAGE_MAIN;
+        pageVoice.sendMultiDataToAmbika(MIDI);
         break;
 
       case PIN_SW_ENC5:
@@ -131,8 +130,8 @@ void initSwitches() {
   switches.emplace_back(new LEDSwitch(PARAM_TUNING_POLY, MCP2, PIN_SW_VOICE_POLY, leds_poly_mode));
   switches.emplace_back(new LEDSwitch(PARAM_TUNING_OCTAVE, MCP2, PIN_SW_VOICE_OCT, leds_oct));
   switches.emplace_back(new LEDSwitch(PARAM_TUNING_LEGATO, MCP2, PIN_SW_VOICE_LEGATO, leds_legato));
-  switches.emplace_back(new UISwitch(MCP1, PIN_SW_EDIT_MATRIX));
-  switches.emplace_back(new UISwitch(MCP1, PIN_SW_EDIT_OP));
+  switches.emplace_back(new UISwitch(MCP1, PIN_SW_MAIN_PAGE));
+  switches.emplace_back(new UISwitch(MCP1, PIN_SW_EDIT_MATRIX_OP));
   switches.emplace_back(new UISwitch(MCP1, PIN_SW_EDIT_VOICE));
   switches.emplace_back(new UISwitch(MCP1, PIN_SW_LOAD_PATCH));
   switches.emplace_back(new UISwitch(MCP1, PIN_SW_SAVE_PATCH));

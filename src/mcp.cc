@@ -29,8 +29,8 @@ void initMCP() {
   mcp[MCP1].pinMode(PIN_LED_LFO2_EL, OUTPUT);
   mcp[MCP1].pinMode(PIN_LED_LFO2_LE, OUTPUT);
   mcp[MCP1].pinMode(PIN_SW_LFO2_TRG, INPUT_PULLUP);
-  mcp[MCP1].pinMode(PIN_SW_EDIT_MATRIX, INPUT_PULLUP);
-  mcp[MCP1].pinMode(PIN_SW_EDIT_OP, INPUT_PULLUP);
+  mcp[MCP1].pinMode(PIN_SW_MAIN_PAGE, INPUT_PULLUP);
+  mcp[MCP1].pinMode(PIN_SW_EDIT_MATRIX_OP, INPUT_PULLUP);
   mcp[MCP1].pinMode(PIN_SW_EDIT_VOICE, INPUT_PULLUP);
   mcp[MCP1].pinMode(PIN_SW_SAVE_PATCH, INPUT_PULLUP);
   mcp[MCP1].pinMode(PIN_SW_LOAD_PATCH, INPUT_PULLUP);
@@ -39,8 +39,8 @@ void initMCP() {
 
   mcp[MCP1].setupInterrupts(false, false, LOW);
   mcp[MCP1].setupInterruptPin(PIN_SW_LFO2_TRG, LOW);
-  mcp[MCP1].setupInterruptPin(PIN_SW_EDIT_MATRIX, LOW);
-  mcp[MCP1].setupInterruptPin(PIN_SW_EDIT_OP, LOW);
+  mcp[MCP1].setupInterruptPin(PIN_SW_MAIN_PAGE, LOW);
+  mcp[MCP1].setupInterruptPin(PIN_SW_EDIT_MATRIX_OP, LOW);
   mcp[MCP1].setupInterruptPin(PIN_SW_EDIT_VOICE, LOW);
   mcp[MCP1].setupInterruptPin(PIN_SW_SAVE_PATCH, LOW);
   mcp[MCP1].setupInterruptPin(PIN_SW_LOAD_PATCH, LOW);
