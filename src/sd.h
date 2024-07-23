@@ -12,6 +12,8 @@ private:
 
   char filePathBuffer[128];
   bool filePathSet;
+  bool loaded;
+  File file;
 };
 
 void sendSysExDataToAmbika(midi::MidiInterface<midi::SerialMIDI<HardwareSerial> > &MIDI, uint8_t *data, size_t size, uint8_t command, uint8_t part);

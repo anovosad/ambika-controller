@@ -72,8 +72,8 @@ inline void appendString(char **dest, char src) {
 }
 
 void Storage::setFilePath(const char* bank, uint8_t index, uint8_t type) {
-  filePathSet = false;
   char *filePathIndex = filePathBuffer;
+  filePathSet = false;
 
   switch (type) {
     case PATCH_TYPE_PROGRAM: 
@@ -123,11 +123,11 @@ void Storage::setFilePath(const char* bank, uint8_t index, uint8_t type) {
 
 bool Storage::loadName(fs::FS &fs, const char* bank, uint8_t index, uint8_t part, uint8_t type, char *name) {
   uint8_t readBuffer[16];
-  StorageObject object;
+  loaded = false;
 
   setFilePath(bank, index, type);
 
-  File file = fs.open(filePathBuffer);
+  file = fs.open(filePathBuffer);
   if (!file) {
     return false;
   }
@@ -153,6 +153,7 @@ bool Storage::loadName(fs::FS &fs, const char* bank, uint8_t index, uint8_t part
     uint32_t size = *reinterpret_cast<uint32_t*>(&readBuffer[4]);
     readBytes = file.read((uint8_t *) name, size);
     if (readBytes != size) return false;
+    loaded = true;
     return true;
   }
 
@@ -161,38 +162,18 @@ bool Storage::loadName(fs::FS &fs, const char* bank, uint8_t index, uint8_t part
 
 void Storage::loadAndSend(fs::FS &fs, uint8_t part) {
   if (!filePathSet) return;
+  if (!loaded) return;
 
   uint8_t readBuffer[16];
   StorageObject object;
-
-  File file = fs.open(filePathBuffer);
-  if (!file) {
-    return;
-  }
-
-  if (file.isDirectory()) {
-    return;
-  }
-
   size_t readBytes = 0;
 
-  readBytes = file.read(readBuffer, 8);
-  if (readBytes != 8) return;
-  if (std::memcmp(readBuffer, kRiffTag, 4) != 0) return;
-
-  readBytes = file.read(readBuffer, 4);
-  if (readBytes != 4) return;
-  if (std::memcmp(readBuffer, kFormatTag, 4) != 0) return;
 
   while (1) {
     readBytes = file.read(readBuffer, 8);
     if (readBytes != 8) return;
 
-    if (std::memcmp(readBuffer, kNameTag, 4) == 0) {
-      uint32_t size = *reinterpret_cast<uint32_t*>(&readBuffer[4]);
-      readBytes = file.read((uint8_t *) readBuffer, size);
-      if (readBytes != size) return;
-    } else if (std::memcmp(readBuffer, kObjectTag, 4) == 0) {
+    if (std::memcmp(readBuffer, kObjectTag, 4) == 0) {
       uint32_t size = *reinterpret_cast<uint32_t*>(&readBuffer[4]);
       readBytes = file.read((uint8_t *) &object, size);
       if (readBytes != size) return;
