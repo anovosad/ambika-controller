@@ -1,8 +1,9 @@
 #pragma once
 
-#include <vector>
 #include "parameters.h"
 #include "midi.h"
+#include "multi.h"
+#include <vector>
 #include <Adafruit_SH110X.h>
 #include <list>
 
@@ -21,9 +22,9 @@ enum PageID {
 
 class Page {
 public:
-  virtual void encoderEvent(int encoder, int delta) = 0;
-  virtual void draw(Adafruit_SH1106G &display) = 0;
-  virtual void task(Adafruit_SH1106G &display) = 0;
+  virtual void encoderEvent(int encoder, int delta, bool pressed);
+  virtual void draw(Adafruit_SH1106G &display);
+  virtual void switchPressed();
 };
 
 /*****************************************************************************/
@@ -32,9 +33,8 @@ class PageMatrix : public Page {
 public:
   PageMatrix(const std::vector<std::vector<ParameterID>> &m);
 
-  void encoderEvent(int encoder, int delta);
+  void encoderEvent(int encoder, int delta, bool pressed);
   void draw(Adafruit_SH1106G &display);
-  void task(Adafruit_SH1106G &display);
 
 private:
   std::vector<std::vector<ParameterID>> lines;
@@ -49,12 +49,9 @@ class PageVoice : public Page {
 public:
   PageVoice(const std::vector<std::vector<ParameterID>> &m);
 
-  void encoderEvent(int encoder, int delta);
+  void encoderEvent(int encoder, int delta, bool pressed);
   void draw(Adafruit_SH1106G &display);
-  void task(Adafruit_SH1106G &display);
-
-  void pressEnc();
-  void sendMultiDataToAmbika(midi::MidiInterface<midi::SerialMIDI<HardwareSerial> > &MIDI);
+  void switchPressed();
 
 private:
   std::vector<std::vector<ParameterID>> lines;
@@ -70,10 +67,8 @@ class PageLoadPatch : public Page {
 public:
   PageLoadPatch(const std::vector<ParameterID> &m);
 
-  void encoderEvent(int encoder, int delta);
+  void encoderEvent(int encoder, int delta, bool pressed);
   void draw(Adafruit_SH1106G &display);
-  void task(Adafruit_SH1106G &display);
-  void setChanged();
 
 private:
   std::vector<ParameterID> data;
@@ -90,10 +85,7 @@ class PageMain : public Page {
 public:
   PageMain();
 
-  void encoderEvent(int encoder, int delta);
   void draw(Adafruit_SH1106G &display);
-  void task(Adafruit_SH1106G &display);
-
 };
 
 /*****************************************************************************/

@@ -20,7 +20,6 @@
 
 
 void ioCallback();
-void pageCallback();
 void displayCallback();
 void mcpCallback();
 void midiCallback();
@@ -29,7 +28,6 @@ Adafruit_SH1106G display = Adafruit_SH1106G(128, 64, &SPI, 48, 47, 35);
 
 Task io_task(5, TASK_FOREVER, &ioCallback);
 Task display_task(50, TASK_FOREVER, &displayCallback);
-Task page_task(50, TASK_FOREVER, &pageCallback);
 Task mcp_task(1, TASK_FOREVER, &mcpCallback);
 Task midi_task(1, TASK_FOREVER, &midiCallback);
 
@@ -82,11 +80,6 @@ void displayCallback() {
     getActivePage().draw(display);
 }
 
-void pageCallback() {
-    getActivePage().task(display);
-}
-
-
 void switchesPress(int mcpId, uint16_t captured) {
   for (auto &it : switches) {
       if (it->getMcpId() == mcpId) {
@@ -100,7 +93,7 @@ void encodersRotate(int mcpIntPin, uint16_t captured) {
       if (it.getMcpIntPin() == mcpIntPin) {
         int result = it.process(captured);
         if (result != 0) {
-          getActivePage().encoderEvent(it.getId(), result);
+          getActivePage().encoderEvent(it.getId(), result, false);
         }
       }
     }
@@ -173,6 +166,7 @@ void setup() {
 
   if (!display.begin()) {
     Serial.println(F("SSD1306 allocation failed"));
+    return;
   }
 
   display.clearDisplay();
@@ -183,28 +177,6 @@ void setup() {
     Serial.println("Card Mount Failed");
     return;
   }
-  uint8_t cardType = SD.cardType();
-
-  if (cardType == CARD_NONE) {
-    Serial.println("No SD card attached");
-    return;
-  }
-
-  Serial.print("SD Card Type: ");
-  if (cardType == CARD_MMC) {
-    Serial.println("MMC");
-  } else if (cardType == CARD_SD) {
-    Serial.println("SDSC");
-  } else if (cardType == CARD_SDHC) {
-    Serial.println("SDHC");
-  } else {
-    Serial.println("UNKNOWN");
-  }
-
-  uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-  Serial.printf("SD Card Size: %lluMB\n", cardSize);
-
-
 
   MIDI.begin(1);
 
@@ -220,13 +192,11 @@ void setup() {
 
   runner.addTask(display_task);
   runner.addTask(io_task);
-  runner.addTask(page_task);
   runner.addTask(mcp_task);
   runner.addTask(midi_task);
 
   display_task.enable();
   io_task.enable();
-  page_task.enable();
   mcp_task.enable();
   midi_task.enable();
 

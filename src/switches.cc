@@ -103,7 +103,7 @@ void UISwitch::press(uint16_t captured) {
         break;
 
       case PIN_SW_LOAD_PATCH:
-        pageLoadPatch.encoderEvent(0, 0);
+        pageLoadPatch.encoderEvent(0, 0, false);
         activePage = PAGE_LOAD_PATCH;
         break;
 
@@ -111,18 +111,11 @@ void UISwitch::press(uint16_t captured) {
         break;
 
       case PIN_SW_SAVE:
-        if (activePage == PAGE_EDIT_VOICE) {
-          pageVoice.sendMultiDataToAmbika(MIDI);
-        } else if (activePage == PAGE_LOAD_PATCH) {
-        }
+        getActivePage().switchPressed();
         break;
 
       case PIN_SW_ENC5:
-        if (activePage == PAGE_EDIT_VOICE) {
-          pageVoice.pressEnc();
-        } else if (activePage == PAGE_LOAD_PATCH) {
-          pageLoadPatch.encoderEvent(0, 0);
-        }
+        getActivePage().encoderEvent(4, 0, true);
         break;
     }
   }

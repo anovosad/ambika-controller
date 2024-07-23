@@ -4,6 +4,11 @@
 #include "sd.h"
 #include <cstdio>
 
+/*****************************************************************************/
+
+void Page::encoderEvent(int encoder, int delta, bool pressed) {}
+void Page::draw(Adafruit_SH1106G &display) {}
+void Page::switchPressed() {}
 
 /*****************************************************************************/
 
@@ -14,18 +19,24 @@ PageMatrix::PageMatrix(const std::vector<std::vector<ParameterID>> &m) {
   displayedLines = std::min(5, static_cast<int>(lines.size()));
 }
 
-void PageMatrix::encoderEvent(int encoder, int delta) {
-  if (encoder == 0) {
-    activeLine = max(min(activeLine - delta, static_cast<int>(lines.size()) - 1), 0);
+void PageMatrix::encoderEvent(int encoder, int delta, bool pressed) {
+  switch (encoder) {
+    case 0:
+      activeLine = max(min(activeLine - delta, static_cast<int>(lines.size()) - 1), 0);
 
-    if (activeLine > firstDisplayedLine + displayedLines - 1) {
-      firstDisplayedLine = activeLine - displayedLines + 1;
-    } else if (activeLine < firstDisplayedLine) {
-      firstDisplayedLine = activeLine;
-    }
-  } else if (encoder >= 1 && encoder <= 3) {
-    Parameter &p = params[lines[activeLine][encoder - 1]];
-    p.setNRPNValue(p.getNRPNValue() - delta);      
+      if (activeLine > firstDisplayedLine + displayedLines - 1) {
+        firstDisplayedLine = activeLine - displayedLines + 1;
+      } else if (activeLine < firstDisplayedLine) {
+        firstDisplayedLine = activeLine;
+      }
+      break;
+
+    case 1:
+    case 2:
+    case 3:
+      Parameter &p = params[lines[activeLine][encoder - 1]];
+      p.setNRPNValue(p.getNRPNValue() - delta);      
+      break;
   }
 }
 
@@ -62,10 +73,6 @@ void PageMatrix::draw(Adafruit_SH1106G &display) {
   display.display();
 }
 
-void PageMatrix::task(Adafruit_SH1106G &display) {
-}
-
-
 /*****************************************************************************/
 
 PageVoice::PageVoice(const std::vector<std::vector<ParameterID>> &m) {
@@ -76,21 +83,46 @@ PageVoice::PageVoice(const std::vector<std::vector<ParameterID>> &m) {
   displayedLines = std::min(5, static_cast<int>(lines.size()));
 }
 
-void PageVoice::encoderEvent(int encoder, int delta) {
-  if (encoder == 0) {
-    activeLine = max(min(activeLine - delta, static_cast<int>(lines.size()) - 1), 0);
+void PageVoice::encoderEvent(int encoder, int delta, bool pressed) {
+  switch (encoder) {
+    case 0:
+      activeLine = max(min(activeLine - delta, static_cast<int>(lines.size()) - 1), 0);
 
-    if (activeLine > firstDisplayedLine + displayedLines - 1) {
-      firstDisplayedLine = activeLine - displayedLines + 1;
-    } else if (activeLine < firstDisplayedLine) {
-      firstDisplayedLine = activeLine;
-    }
-  } else if (encoder >= 1 && encoder <= 3) {
-    Parameter &p = params[lines[activeLine][encoder - 1]];
-    p.setNRPNValue(p.getNRPNValue() - delta);      
-  } else if (encoder == 4) {
-    activeVoice = std::max(std::min(activeVoice - delta, 5), 0);
-  } 
+      if (activeLine > firstDisplayedLine + displayedLines - 1) {
+        firstDisplayedLine = activeLine - displayedLines + 1;
+      } else if (activeLine < firstDisplayedLine) {
+        firstDisplayedLine = activeLine;
+      }
+      break;
+
+    case 1:
+    case 2:
+    case 3:
+      {
+        Parameter &p = params[lines[activeLine][encoder - 1]];
+        p.setNRPNValue(p.getNRPNValue() - delta);  
+        break;
+      }
+
+    case 4:
+      if (pressed) {
+        int16_t voiceValue = params[lines[activeLine][3]].getNRPNValue();
+        voiceValue = voiceValue ^ ((int16_t) 1 << activeVoice);
+        params[lines[activeLine][3]].setNRPNValue(voiceValue);
+
+        // clear same voice in other parts
+        for (int i = 0; i < 6; i++) {
+          if (i != activeLine) {
+            int16_t voiceValue = params[lines[i][3]].getNRPNValue();
+            voiceValue = voiceValue & ~((int16_t) 1 << activeVoice);
+            params[lines[i][3]].setNRPNValue(voiceValue);
+          }
+        }
+      } else {
+        activeVoice = std::max(std::min(activeVoice - delta, 5), 0);
+      }
+      break;
+  }
 }
 
 void PageVoice::draw(Adafruit_SH1106G &display) {
@@ -135,27 +167,7 @@ void PageVoice::draw(Adafruit_SH1106G &display) {
   display.display();
 }
 
-void PageVoice::task(Adafruit_SH1106G &display) {
-}
-
-void PageVoice::pressEnc() {
-  int16_t voiceValue = params[lines[activeLine][3]].getNRPNValue();
-  voiceValue = voiceValue ^ ((int16_t) 1 << activeVoice);
-  params[lines[activeLine][3]].setNRPNValue(voiceValue);
-
-  // clear same voice in other parts
-  for (int i = 0; i < 6; i++) {
-    if (i != activeLine) {
-      int16_t voiceValue = params[lines[i][3]].getNRPNValue();
-      voiceValue = voiceValue & ~((int16_t) 1 << activeVoice);
-      params[lines[i][3]].setNRPNValue(voiceValue);
-    }
-  }
-}
-
-void PageVoice::sendMultiDataToAmbika(midi::MidiInterface<midi::SerialMIDI<HardwareSerial> > &MIDI) {
-  uint8_t sysexMessage[256];
-  uint8_t* patch;
+void PageVoice::switchPressed() {
   MultiData multiData;
 
   for (int i = 0; i < lines.size(); i++) {
@@ -165,58 +177,48 @@ void PageVoice::sendMultiDataToAmbika(midi::MidiInterface<midi::SerialMIDI<Hardw
     multiData.part_mapping_[i].voice_allocation = params[lines[i][3]].getNRPNValue();
   }
 
-  patch = (uint8_t*)&multiData;
-
-  uint8_t startSysex[7] = { 0x00, 0x21, 0x02, // (Manufacturer ID for Mutable Instruments)
-      0x00,  0x04, // (Product ID for Ambika)
-      0x04, // Command to send Multidata (Docs says 5 !)
-      0x00 // // No argument
-  };
-  memcpy(sysexMessage, startSysex, 7);
-  int index = 7;
-  int checkSum = 0;
-
-  for (int s = 0; s < 56; s++) {
-      sysexMessage[index++] = patch[s] >> 4;
-      sysexMessage[index++] = patch[s] & 0xf;
-
-      checkSum = (checkSum + patch[s]) % 256;
-  }
-
-  sysexMessage[index++] = checkSum >> 4;
-  sysexMessage[index++] = checkSum & 0xf;
-
-  MIDI.sendSysEx(index, sysexMessage);
+  sendSysExDataToAmbika(MIDI, (uint8_t*) &multiData, sizeof(multiData), 0x04, 0x00);
 }
 
 /*****************************************************************************/
 
 PageLoadPatch::PageLoadPatch(const std::vector<ParameterID> &m) {
   data = m;
+  changed = false;
+  loaded = false;
   uploading = false;
 }
 
-void PageLoadPatch::encoderEvent(int encoder, int delta) {
-  if (encoder >= 0 && encoder <= 3) {
-    Parameter &p = params[data[encoder]];
-    p.setNRPNValue(p.getNRPNValue() - delta);    
+void PageLoadPatch::encoderEvent(int encoder, int delta, bool pressed) {
+  switch (encoder) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+      Parameter &p = params[data[encoder]];
+      p.setNRPNValue(p.getNRPNValue() - delta);    
 
-    if (encoder == 2) return;
+      if (encoder == 2) break;
 
-    changed = true;  
-    lastChanged = millis();
-    loaded = storage.loadName(
-      SD, 
-      params[data[1]].getDisplayValue().c_str(), 
-      static_cast<uint8_t>(params[data[0]].getNRPNValue()),
-      static_cast<uint8_t>(params[data[2]].getNRPNValue()),
-      static_cast<uint8_t>(params[data[3]].getNRPNValue()),
-      name
-    );
+      changed = true;  
+      lastChanged = millis();
+      loaded = storage.loadName(
+        SD, 
+        params[data[1]].getDisplayValue().c_str(), 
+        static_cast<uint8_t>(params[data[0]].getNRPNValue()),
+        static_cast<uint8_t>(params[data[2]].getNRPNValue()),
+        static_cast<uint8_t>(params[data[3]].getNRPNValue()),
+        name
+      );
+      break;
   }
 }
 
 void PageLoadPatch::draw(Adafruit_SH1106G &display) {
+  if (changed && loaded && millis() - lastChanged > 500) {
+    uploading = true;
+  }
+
   display.clearDisplay();
 
   display.setCursor(0, 0);
@@ -254,32 +256,18 @@ void PageLoadPatch::draw(Adafruit_SH1106G &display) {
   }
 
   display.display();
-}
 
-void PageLoadPatch::setChanged() {
-  changed = true;
-}
-
-
-void PageLoadPatch::task(Adafruit_SH1106G &display) {
-  if (!changed) return;
-  if (!loaded) return;
-  if (millis() - lastChanged < 500) return;
-
-  uploading = true;
-  draw(display);
-
-  storage.loadAndSend(SD, static_cast<uint8_t>(params[data[2]].getNRPNValue()));
-  changed = false;
-  uploading = false;
+  if (uploading) {
+    // this is time consuming
+    storage.loadAndSend(SD, static_cast<uint8_t>(params[data[2]].getNRPNValue()));
+    changed = false;
+    uploading = false;
+  }
 }
 
 /*****************************************************************************/
 
 PageMain::PageMain() {}
-
-void PageMain::encoderEvent(int encoder, int delta) {
-}
 
 void PageMain::draw(Adafruit_SH1106G &display) {
   display.clearDisplay();
@@ -305,9 +293,6 @@ void PageMain::draw(Adafruit_SH1106G &display) {
   }
 
   display.display();
-}
-
-void PageMain::task(Adafruit_SH1106G &display) {
 }
 
 /*****************************************************************************/
