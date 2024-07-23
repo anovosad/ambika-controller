@@ -20,7 +20,7 @@
 
 
 void ioCallback();
-void sdCallback();
+void pageCallback();
 void displayCallback();
 void mcpCallback();
 void midiCallback();
@@ -29,7 +29,7 @@ Adafruit_SH1106G display = Adafruit_SH1106G(128, 64, &SPI, 48, 47, 35);
 
 Task io_task(5, TASK_FOREVER, &ioCallback);
 Task display_task(50, TASK_FOREVER, &displayCallback);
-Task sd_task(1000, TASK_ONCE, &sdCallback);
+Task page_task(50, TASK_FOREVER, &pageCallback);
 Task mcp_task(1, TASK_FOREVER, &mcpCallback);
 Task midi_task(1, TASK_FOREVER, &midiCallback);
 
@@ -82,45 +82,10 @@ void displayCallback() {
     getActivePage().draw(display);
 }
 
-void sdCallback() {
-
-  unsigned long start = millis();
-
-  listDir(SD, "/", 0);
-
-  Serial.println(millis() - start);
+void pageCallback() {
+    getActivePage().task(display);
 }
 
-void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
-  Serial.printf("Listing directory: %s\n", dirname);
-
-  File root = fs.open(dirname);
-  if (!root) {
-    Serial.println("Failed to open directory");
-    return;
-  }
-  if (!root.isDirectory()) {
-    Serial.println("Not a directory");
-    return;
-  }
-
-  File file = root.openNextFile();
-  while (file) {
-    if (file.isDirectory()) {
-      Serial.print("  DIR : ");
-      Serial.println(file.name());
-      if (levels) {
-        listDir(fs, file.path(), levels - 1);
-      }
-    } else {
-      Serial.print("  FILE: ");
-      Serial.print(file.name());
-      Serial.print("  SIZE: ");
-      Serial.println(file.size());
-    }
-    file = root.openNextFile();
-  }
-}
 
 void switchesPress(int mcpId, uint16_t captured) {
   for (auto &it : switches) {
@@ -134,7 +99,9 @@ void encodersRotate(int mcpIntPin, uint16_t captured) {
   for (auto &it : encoders) {
       if (it.getMcpIntPin() == mcpIntPin) {
         int result = it.process(captured);
-        getActivePage().encoderEvent(it.getId(), result);
+        if (result != 0) {
+          getActivePage().encoderEvent(it.getId(), result);
+        }
       }
     }
 }
@@ -212,7 +179,7 @@ void setup() {
   display.setTextColor(SH110X_WHITE);
   display.setTextSize(1);
 
-  if (!SD.begin(9, SPI, 1000000L)) {
+  if (!SD.begin(9, SPI, 4000000L)) {
     Serial.println("Card Mount Failed");
     return;
   }
@@ -253,13 +220,13 @@ void setup() {
 
   runner.addTask(display_task);
   runner.addTask(io_task);
-  runner.addTask(sd_task);
+  runner.addTask(page_task);
   runner.addTask(mcp_task);
   runner.addTask(midi_task);
 
   display_task.enable();
   io_task.enable();
-  // sd_task.enable();
+  page_task.enable();
   mcp_task.enable();
   midi_task.enable();
 

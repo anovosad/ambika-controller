@@ -4,6 +4,7 @@
 #include "pages.h"
 #include "mcp.h"
 #include "midi.h"
+#include "sd.h"
 
 /*****************************************************************************/
 
@@ -102,17 +103,26 @@ void UISwitch::press(uint16_t captured) {
         break;
 
       case PIN_SW_LOAD_PATCH:
+        pageLoadPatch.encoderEvent(0, 0);
+        activePage = PAGE_LOAD_PATCH;
         break;
 
       case PIN_SW_SAVE_PATCH:
         break;
 
       case PIN_SW_SAVE:
-        pageVoice.sendMultiDataToAmbika(MIDI);
+        if (activePage == PAGE_EDIT_VOICE) {
+          pageVoice.sendMultiDataToAmbika(MIDI);
+        } else if (activePage == PAGE_LOAD_PATCH) {
+        }
         break;
 
       case PIN_SW_ENC5:
-        pageVoice.pressEnc();
+        if (activePage == PAGE_EDIT_VOICE) {
+          pageVoice.pressEnc();
+        } else if (activePage == PAGE_LOAD_PATCH) {
+          pageLoadPatch.encoderEvent(0, 0);
+        }
         break;
     }
   }

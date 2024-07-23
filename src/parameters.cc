@@ -62,7 +62,15 @@ const char *noteNames[] = {
   "C9", "C#9", "D9", "D#9", "E9", "F9", "F#9", "G9", nullptr
 };
 
- 
+const char *bankNames[] = {
+  "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", nullptr
+};
+
+const char *programTypes[] = {
+  "Program", "Multi", "Patch", "Sequence", nullptr
+};
+
+/*****************************************************************************/
 
 Parameter::Parameter(const char *fullName, uint8_t cc, uint8_t nrpn, int8_t min, int8_t max, int8_t defaultValue, const char **valConverter) : 
   fullName(fullName), cc(cc), nrpn(nrpn), min(min), max(max), defaultValue(defaultValue), rawValue(0.0), dirty(false), valConverter(valConverter)
@@ -321,4 +329,10 @@ std::vector<Parameter> params = {
   Parameter{"Part6 Low Key", 0, 0, 0, 127, 0, noteNames},
   Parameter{"Part6 High Key", 0, 0, 0, 127, 127, noteNames},
   Parameter{"Part6 Voices", 0, 0, 0, 63, 0, nullptr},
+
+  Parameter{"Load Patch Bank", 0, 0, 0, 25, 0, bankNames},
+  Parameter{"Load Patch Index", 0, 0, 0, 127, 0, nullptr},
+  Parameter{"Load Patch Part", 0, 0, 1, 6, 1, nullptr},
+  Parameter{"Load Patch Type", 0, 0, 0, 3, 0, programTypes},
+
 };

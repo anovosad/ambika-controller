@@ -14,6 +14,7 @@ enum PageID {
   PAGE_EDIT_MATRIX,
   PAGE_EDIT_OP,
   PAGE_EDIT_VOICE,
+  PAGE_LOAD_PATCH,
 };
 
 /*****************************************************************************/
@@ -22,6 +23,7 @@ class Page {
 public:
   virtual void encoderEvent(int encoder, int delta) = 0;
   virtual void draw(Adafruit_SH1106G &display) = 0;
+  virtual void task(Adafruit_SH1106G &display) = 0;
 };
 
 /*****************************************************************************/
@@ -32,9 +34,10 @@ public:
 
   void encoderEvent(int encoder, int delta);
   void draw(Adafruit_SH1106G &display);
+  void task(Adafruit_SH1106G &display);
 
 private:
-  std::vector<std::vector<ParameterID>> matrix;
+  std::vector<std::vector<ParameterID>> lines;
   int activeLine;
   int firstDisplayedLine;
   unsigned int displayedLines;
@@ -48,16 +51,37 @@ public:
 
   void encoderEvent(int encoder, int delta);
   void draw(Adafruit_SH1106G &display);
+  void task(Adafruit_SH1106G &display);
 
   void pressEnc();
   void sendMultiDataToAmbika(midi::MidiInterface<midi::SerialMIDI<HardwareSerial> > &MIDI);
 
 private:
-  std::vector<std::vector<ParameterID>> matrix;
+  std::vector<std::vector<ParameterID>> lines;
   int activeLine;
   int activeVoice;
   int firstDisplayedLine;
   unsigned int displayedLines;
+};
+
+/*****************************************************************************/
+
+class PageLoadPatch : public Page {
+public:
+  PageLoadPatch(const std::vector<ParameterID> &m);
+
+  void encoderEvent(int encoder, int delta);
+  void draw(Adafruit_SH1106G &display);
+  void task(Adafruit_SH1106G &display);
+  void setChanged();
+
+private:
+  std::vector<ParameterID> data;
+  char name[64];
+  bool loaded;
+  bool changed;
+  bool uploading;
+  unsigned long lastChanged;
 };
 
 /*****************************************************************************/
@@ -68,6 +92,8 @@ public:
 
   void encoderEvent(int encoder, int delta);
   void draw(Adafruit_SH1106G &display);
+  void task(Adafruit_SH1106G &display);
+
 };
 
 /*****************************************************************************/
@@ -75,6 +101,7 @@ public:
 extern PageMatrix pageMatrix;
 extern PageMatrix pageOp;
 extern PageVoice pageVoice;
+extern PageLoadPatch pageLoadPatch;
 extern PageMain pageMain;
 
 extern PageID activePage;

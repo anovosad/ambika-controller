@@ -3,6 +3,8 @@
 #define NUMBER_OF_VOICES 6
 #define NUMBER_OF_KNOBS 8
 
+#pragma pack(push, 1)
+
 struct KnobAssignment {
     uint8_t part;
     uint8_t parameter;
@@ -32,3 +34,5 @@ struct MultiData {
     // Offset: 52-56
     uint8_t padding2[4];
 };
+
+#pragma pack(pop)
